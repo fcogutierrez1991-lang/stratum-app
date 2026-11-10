@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html lang="es" class="h-full">
 <head>
+    <!-- Configuración para PWA / APK -->
+    <meta name="theme-color" content="#090d16">
+    <link rel="manifest" href="data:application/manifest+json,{
+        &quot;name&quot;: &quot;Stratum - Gestión&quot;,
+        &quot;short_name&quot;: &quot;Stratum&quot;,
+        &quot;start_url&quot;: &quot;./&quot;,
+        &quot;display&quot;: &quot;standalone&quot;,
+        &quot;background_color&quot;: &quot;#090d16&quot;,
+        &quot;theme_color&quot;: &quot;#090d16&quot;,
+        &quot;icons&quot;: [{
+            &quot;src&quot;: &quot;https://cdn-icons-png.flaticon.com/512/3076/3076129.png&quot;,
+            &quot;sizes&quot;: &quot;512x512&quot;,
+            &quot;type&quot;: &quot;image/png&quot;
+        }]
+    }">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ZW50ID0+IHt9KTs=').catch(() => {});
+            });
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stratum - Gestión de Negocio</title>
