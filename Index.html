@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratum - Gestión de Negocio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slateCustom: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-slate-900 text-slate-100 font-sans antialiased overflow-x-hidden">
+
+    <!-- Modal de Alerta / Mensaje Personalizado (Sin usar alert nativo) -->
+    <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform transition-all">
+            <div class="flex items-center space-x-3 mb-4">
+                <div id="modalIcon" class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h3 id="modalTitle" class="text-lg font-semibold text-white">Aviso</h3>
+            </div>
+            <p id="modalMessage" class="text-slate-300 text-sm mb-6">Mensaje de notificación.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="modalCancelBtn" onclick="closeModal(false)" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl transition hidden">Cancelar</button>
+                <button id="modalOkBtn" onclick="closeModal(true)" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-indigo-500/30 transition">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA 1: PORTADA / SPLASH -->
+    <div id="screen-splash" class="min-h-full flex flex-col items-center justify-center p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        
+        <div class="relative z-10 max-w-md w-full bg-slate-800/80 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-8 shadow-2xl text-center">
+            <!-- Icono corporativo / Logotipo -->
+            <div class="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-sky-400 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-6 transform hover:rotate-3 transition duration-300">
+                <div class="space-y-1">
+                    <div class="w-8 h-2 bg-white rounded-full mx-auto"></div>
+                    <div class="w-10 h-2 bg-white/80 rounded-full mx-auto"></div>
+                    <div class="w-6 h-2 bg-white/60 rounded-full mx-auto"></div>
+                </div>
+            </div>
+
+            <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Stratum</h1>
+            <p class="text-xs uppercase tracking-widest text-indigo-400 font-semibold mb-4">Plataforma de Gestión Empresarial</p>
+            <p class="text-slate-300 text-sm leading-relaxed mb-8">
+                Control absoluto de costos, recetas, inventarios, punto de venta y agenda de pedidos para tu negocio.
+            </p>
+
+            <button onclick="enterApp()" class="w-full py-3.5 px-6 bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+                <span>Ingresar al Sistema</span>
+                <i class="fa-solid fa-arrow-right text-sm"></i>
+            </button>
+
+            <div class="mt-8 text-xs text-slate-500">
+                Stratum v1.0 • Listo para producción
+            </div>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL (Contenedor oculto hasta ingresar) -->
+    <div id="app-main" class="h-full flex flex-col lg:flex-row hidden">
+        
+        <!-- BARRA LATERAL DE NAVEGACIÓN -->
+        <aside class="w-full lg:w-64 bg-slate-800 border-b lg:border-b-0 lg:border-r border-slate-700/80 flex flex-col justify-between shrink-0 z-20">
+            <div>
+                <!-- Brand Header -->
+                <div class="p-6 flex items-center space-x-3 border-b border-slate-700/60">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-sky-400 rounded-xl flex items-center justify-center shadow-md">
+                        <div class="space-y-0.5">
+                            <div class="w-4 h-1.5 bg-white rounded-full"></div>
+                            <div class="w-5 h-1.5 bg-white/80 rounded-full"></div>
+                            <div class="w-3 h-1.5 bg-white/60 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-white tracking-wide">Stratum</h2>
+                        <span class="text-[10px] text-emerald-400 font-medium px-2 py-0.5 bg-emerald-500/10 rounded-full">Activo</span>
+                    </div>
+                </div>
+
+                <!-- Menú de Navegación -->
+                <nav class="p-4 space-y-1.5">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition tab-btn bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
+                        <i class="fa-solid fa-chart-pie w-5"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('costs')" id="nav-costs" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition tab-btn text-slate-400 hover:bg-slate-700/50 hover:text-slate-200">
+                        <i class="fa-solid fa-calculator w-5"></i>
+                        <span>Costos y POS</span>
+                    </button>
+                    <button onclick="switchTab('inventory')" id="nav-inventory" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition tab-btn text-slate-400 hover:bg-slate-700/50 hover:text-slate-200">
+                        <i class="fa-solid fa-boxes-stacked w-5"></i>
+                        <span>Stock y Reposición</span>
+                    </button>
+                    <button onclick="switchTab('orders')" id="nav-orders" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition tab-btn text-slate-400 hover:bg-slate-700/50 hover:text-slate-200">
+                        <i class="fa-solid fa-calendar-days w-5"></i>
+                        <span>Pedidos y Agenda</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Footer Sidebar con opción de salir -->
+            <div class="p-4 border-t border-slate-700/60">
+                <button onclick="exitApp()" class="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-slate-700/50 hover:bg-rose-500/20 hover:text-rose-400 text-slate-300 text-xs font-medium rounded-xl transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL DINÁMICO -->
+        <main class="flex-1 overflow-y-auto bg-slate-900 p-4 lg:p-8">
+            
+            <!-- 2. DASHBOARD / RESUMEN -->
+            <section id="tab-dashboard" class="space-y-6 tab-content">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Panel General</h1>
+                        <p class="text-sm text-slate-400">Resumen operativo y métricas en tiempo real de tu negocio.</p>
+                    </div>
+                    <button onclick="resetDataModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-medium rounded-xl transition flex items-center space-x-2">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Restaurar Datos Predeterminados</span>
+                    </button>
+                </div>
+
+                <!-- Métricas Clave (Cards) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Ventas Hoy</span>
+                            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                                <i class="fa-solid fa-cash-register"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-white" id="dash-sales-today">$0</div>
+                        <div class="text-xs text-emerald-400 mt-1 flex items-center space-x-1">
+                            <i class="fa-solid fa-arrow-up"></i> <span id="dash-sales-count">0</span> ventas registradas
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Costo Promedio Recetas</span>
+                            <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                                <i class="fa-solid fa-calculator"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-white" id="dash-avg-cost">$0</div>
+                        <div class="text-xs text-indigo-400 mt-1">
+                            Calculado sobre tus artículos activos
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Stock Crítico</span>
+                            <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-white" id="dash-critical-stock">0</div>
+                        <div class="text-xs text-rose-400 mt-1">
+                            Insumos/artículos por debajo del mínimo
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Pedidos Pendientes</span>
+                            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-white" id="dash-pending-orders">0</div>
+                        <div class="text-xs text-amber-400 mt-1">
+                            Encargos en agenda
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accesos Rápidos & Actividad Reciente -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-lg">
+                        <h3 class="text-lg font-bold text-white mb-4">Accesos Rápidos</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button onclick="switchTab('costs'); switchCostSubTab('pos')" class="p-4 bg-slate-700/40 hover:bg-indigo-600/20 border border-slate-700 hover:border-indigo-500/50 rounded-xl transition text-left group">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                                    <i class="fa-solid fa-cash-register text-lg"></i>
+                                </div>
+                                <h4 class="font-semibold text-white">Registrar Venta (POS)</h4>
+                                <p class="text-xs text-slate-400 mt-1">Vende productos rápidamente y descuenta stock en vivo.</p>
+                            </button>
+
+                            <button onclick="switchTab('costs'); switchCostSubTab('recipes')" class="p-4 bg-slate-700/40 hover:bg-sky-600/20 border border-slate-700 hover:border-sky-500/50 rounded-xl transition text-left group">
+                                <div class="w-10 h-10 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                                    <i class="fa-solid fa-book-open text-lg"></i>
+                                </div>
+                                <h4 class="font-semibold text-white">Crear Nueva Receta</h4>
+                                <p class="text-xs text-slate-400 mt-1">Configura ingredientes, costos y precios de tus artículos.</p>
+                            </button>
+
+                            <button onclick="switchTab('inventory')" class="p-4 bg-slate-700/40 hover:bg-emerald-600/20 border border-slate-700 hover:border-emerald-500/50 rounded-xl transition text-left group">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                                    <i class="fa-solid fa-clipboard-list text-lg"></i>
+                                </div>
+                                <h4 class="font-semibold text-white">Lista de Compras</h4>
+                                <p class="text-xs text-slate-400 mt-1">Genera automáticamente la lista de reposición de insumos.</p>
+                            </button>
+
+                            <button onclick="switchTab('orders')" class="p-4 bg-slate-700/40 hover:bg-amber-600/20 border border-slate-700 hover:border-amber-500/50 rounded-xl transition text-left group">
+                                <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                                    <i class="fa-solid fa-calendar-plus text-lg"></i>
+                                </div>
+                                <h4 class="font-semibold text-white">Nuevo Pedido</h4>
+                                <p class="text-xs text-slate-400 mt-1">Agenda encargos especiales y entregas futuras.</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-lg flex flex-col">
+                        <h3 class="text-lg font-bold text-white mb-4">Estado del Sistema</h3>
+                        <div class="space-y-4 flex-1 flex flex-col justify-center">
+                            <div class="flex items-center justify-between p-3 bg-slate-700/30 rounded-xl">
+                                <span class="text-sm text-slate-300">Insumos Registrados</span>
+                                <span id="stat-ingredients-count" class="font-bold text-white">0</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-700/30 rounded-xl">
+                                <span class="text-sm text-slate-300">Recetas / Artículos</span>
+                                <span id="stat-recipes-count" class="font-bold text-white">0</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-700/30 rounded-xl">
+                                <span class="text-sm text-slate-300">Total en Caja Hoy</span>
+                                <span id="stat-total-cash" class="font-bold text-emerald-400">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. COSTOS Y VENTA DE ARTÍCULOS (Ficha Técnica, Recetas y POS) -->
+            <section id="tab-costs" class="space-y-6 tab-content hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Costos y Punto de Venta (POS)</h1>
+                        <p class="text-sm text-slate-400">Gestiona insumos, diseña recetas con costo automático y registra ventas.</p>
+                    </div>
+                    <!-- Sub-pestanas de costos -->
+                    <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
+                        <button onclick="switchCostSubTab('ingredients')" id="subnav-ingredients" class="px-4 py-2 text-xs font-medium rounded-lg transition cost-subtab-btn bg-indigo-600 text-white">Insumos</button>
+                        <button onclick="switchCostSubTab('recipes')" id="subnav-recipes" class="px-4 py-2 text-xs font-medium rounded-lg transition cost-subtab-btn text-slate-400 hover:text-white">Recetas / Artículos</button>
+                        <button onclick="switchCostSubTab('pos')" id="subnav-pos" class="px-4 py-2 text-xs font-medium rounded-lg transition cost-subtab-btn text-slate-400 hover:text-white">Caja / POS</button>
+                    </div>
+                </div>
+
+                <!-- SUBTAB 1: INSUMOS -->
+                <div id="cost-subtab-ingredients" class="space-y-6 cost-subcontent">
+                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-lg">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                            <h3 class="text-lg font-bold text-white">Catálogo de Insumos y Materia Prima</h3>
+                            <button onclick="openIngredientModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-xl shadow-md transition flex items-center space-x-2">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Agregar Insumo</span>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
+                                        <th class="py-3 px-4">Insumo</th>
+                                        <th class="py-3 px-4">Unidad de Medida</th>
+                                        <th class="py-3 px-4">Costo por Unidad</th>
+                                        <th class="py-3 px-4 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ingredients-table-body" class="divide-y divide-slate-700/50 text-sm">
+                                    <!-- Dinámico -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBTAB 2: RECETAS / ARTÍCULOS -->
+                <div id="cost-subtab-recipes" class="space-y-6 cost-subcontent hidden">
+                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-lg">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                            <h3 class="text-lg font-bold text-white">Artículos y Fichas Técnicas (Recetas)</h3>
+                            <button onclick="openRecipeModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-xl shadow-md transition flex items-center space-x-2">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Crear Artículo / Receta</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="recipes-grid">
+                            <!-- Dinámico -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBTAB 3: POS / CAJA -->
+                <div id="cost-subtab-pos" class="space-y-6 cost-subcontent hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Productos disponibles para venta -->
+                        <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-lg">
+                            <h3 class="text-lg font-bold text-white mb-4">Seleccionar Productos</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="pos-products-grid">
+                                <!-- Dinámico -->
+                            </div>
+                        </div>
+
+                        <!-- Carrito y Cobro -->
+                        <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-lg flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-lg font-bold text-white mb-4">Ticket de Venta</h3>
+                                <div id="pos-cart-items" class="space-y-3 mb-6 max-h-60 overflow-y-auto pr-1">
+                                    <p class="text-xs text-slate-500 text-center py-6">El carrito está vacío</p>
+                                </div>
+                            </div>
+                            <div class="border-t border-slate-700 pt-4 space-y-4">
+                                <div class="flex justify-between items-center text-lg font-bold text-white">
+                                    <span>Total:</span>
+                                    <span id="pos-cart-total" class="text-emerald-400">$0</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-xs text-slate-400 font-medium">Método de Pago</label>
+                                    <select id="pos-payment-method" class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Tarjeta">Tarjeta</option>
+                                    </select>
+                                </div>
+                                <button onclick="checkoutPOS()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-lg shadow-emerald-600/25 transition">
+                                    Completar Venta y Descontar Stock
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. STOCK Y REPOSICIÓN (INVENTARIO) -->
+            <section id="tab-inventory" class="space-y-6 tab-content hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Stock y Reposición</h1>
+                        <p class="text-sm text-slate-400">Control de inventario con alertas de semáforo y lista automática de compras.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="openShoppingListModal()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium rounded-xl shadow-md transition flex items-center space-x-2">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                            <span>Ver Lista de Compras</span>
+                        </button>
+                        <button onclick="openInventoryModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-xl shadow-md transition flex items-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Agregar Artículo Stock</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-lg">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
+                                    <th class="py-3 px-4">Artículo / Insumo</th>
+                                    <th class="py-3 px-4">Estado (Semáforo)</th>
+                                    <th class="py-3 px-4">Cantidad Actual</th>
+                                    <th class="py-3 px-4">Stock Mínimo</th>
+                                    <th class="py-3 px-4">Unidad</th>
+                                    <th class="py-3 px-4 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body" class="divide-y divide-slate-700/50 text-sm">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. PEDIDOS Y CLIENTES (AGENDA) -->
+            <section id="tab-orders" class="space-y-6 tab-content hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Pedidos y Agenda</h1>
+                        <p class="text-sm text-slate-400">Gestiona encargos especiales, datos de clientes y fechas de entrega.</p>
+                    </div>
+                    <button onclick="openOrderModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-xl shadow-md transition flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nuevo Pedido / Encargo</span>
+                    </button>
+                </div>
+
+                <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-lg">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
+                                    <th class="py-3 px-4">Cliente / Teléfono</th>
+                                    <th class="py-3 px-4">Descripción del Pedido</th>
+                                    <th class="py-3 px-4">Fecha de Entrega</th>
+                                    <th class="py-3 px-4">Estado</th>
+                                    <th class="py-3 px-4 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body" class="divide-y divide-slate-700/50 text-sm">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODALES DE GESTIÓN (FORMULARIOS EDITABLES) -->
+
+    <!-- Modal Insumo -->
+    <div id="modal-ingredient" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 id="modal-ingredient-title" class="text-lg font-bold text-white mb-4">Agregar Insumo</h3>
+            <form id="form-ingredient" onsubmit="saveIngredient(event)" class="space-y-4">
+                <input type="hidden" id="ing-id">
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Nombre del Insumo</label>
+                    <input type="text" id="ing-name" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="Ej. Harina de Trigo">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Unidad de Medida</label>
+                    <select id="ing-unit" class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500">
+                        <option value="kg">Kilogramos (kg)</option>
+                        <option value="g">Gramos (g)</option>
+                        <option value="lt">Litros (lt)</option>
+                        <option value="ml">Mililitros (ml)</option>
+                        <option value="unidad">Unidades</option>
+                        <option value="paquete">Paquetes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Costo por Unidad ($)</label>
+                    <input type="number" step="0.01" id="ing-cost" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="Ej. 1.50">
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeIngredientModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg transition">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Receta / Artículo -->
+    <div id="modal-recipe" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 id="modal-recipe-title" class="text-lg font-bold text-white mb-4">Crear Artículo / Receta</h3>
+            <form id="form-recipe" onsubmit="saveRecipe(event)" class="space-y-4">
+                <input type="hidden" id="rec-id">
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Nombre del Producto / Receta</label>
+                    <input type="text" id="rec-name" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="Ej. Galletas de Chispas de Chocolate (Docena)">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium">Margen de Ganancia (%)</label>
+                        <input type="number" step="1" id="rec-margin" value="100" oninput="calculateRecipeCost()" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="100">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium">Precio Venta Sugerido ($)</label>
+                        <input type="number" step="0.01" id="rec-price" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-emerald-400 font-bold mt-1 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Ingredientes necesarios -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs text-slate-400 font-medium">Ingredientes Requeridos</label>
+                        <button type="button" onclick="addRecipeIngredientRow()" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">+ Añadir Insumo</button>
+                    </div>
+                    <div id="recipe-ingredients-container" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                        <!-- Filas dinámicas de ingredientes de la receta -->
+                    </div>
+                </div>
+
+                <div class="bg-slate-700/30 p-3 rounded-xl flex justify-between items-center">
+                    <span class="text-xs text-slate-300">Costo Estimado de Producción:</span>
+                    <span id="rec-calculated-cost" class="font-bold text-white">$0.00</span>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeRecipeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg transition">Guardar Receta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Stock Inventario -->
+    <div id="modal-inventory" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 id="modal-inventory-title" class="text-lg font-bold text-white mb-4">Gestionar Stock de Artículo</h3>
+            <form id="form-inventory" onsubmit="saveInventoryItem(event)" class="space-y-4">
+                <input type="hidden" id="inv-id">
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Nombre del Artículo / Insumo</label>
+                    <input type="text" id="inv-name" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="Ej. Mantequilla 500g">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium">Cantidad Actual</label>
+                        <input type="number" step="0.01" id="inv-qty" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium">Stock Mínimo (Alerta)</label>
+                        <input type="number" step="0.01" id="inv-min" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Unidad de Medida</label>
+                    <input type="text" id="inv-unit" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="kg, unidades, etc.">
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeInventoryModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg transition">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Pedido -->
+    <div id="modal-order" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 id="modal-order-title" class="text-lg font-bold text-white mb-4">Nuevo Pedido / Encargo</h3>
+            <form id="form-order" onsubmit="saveOrder(event)" class="space-y-4">
+                <input type="hidden" id="ord-id">
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Nombre del Cliente</label>
+                    <input type="text" id="ord-client" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="Ej. María González">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Teléfono de Contacto</label>
+                    <input type="text" id="ord-phone" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="+56 9 1234 5678">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">Descripción del Pedido</label>
+                    <textarea id="ord-desc" rows="2" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500" placeholder="Ej. 2 cajas de galletas de chocolate con lazo rojo"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium">Fecha de Entrega</label>
+                        <input type="date" id="ord-date" required class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium">Estado</label>
+                        <select id="ord-status" class="w-full bg-slate-700 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white mt-1 focus:outline-none focus:border-indigo-500">
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="En preparación">En preparación</option>
+                            <option value="Entregado">Entregado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeOrderModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-xl transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg transition">Guardar Pedido</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Lista de Compras Automática -->
+    <div id="modal-shopping-list" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-white mb-2">Lista de Compras (Stock Crítico)</h3>
+            <p class="text-xs text-slate-400 mb-4">Artículos que se encuentran por debajo de su stock mínimo recomendado:</p>
+            <div id="shopping-list-content" class="space-y-3 mb-6">
+                <!-- Dinámico -->
+            </div>
+            <div class="flex justify-end">
+                <button onclick="closeShoppingListModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg transition">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGICA JAVASCRIPT DE LA APLICACIÓN -->
+    <script>
+        // --- ESTADO DE LA APLICACIÓN Y LOCALSTORAGE ---
+        let appData = {
+            ingredients: [],
+            recipes: [],
+            inventory: [],
+            orders: [],
+            sales: []
+        };
+
+        const defaultData = JSON.parse(JSON.stringify(appData));
+
+        // Función auxiliar para formatear moneda adaptada a Chile ($1.500)
+        function formatCLP(amount) {
+            const num = Math.round(Number(amount) || 0);
+            return '$' + num.toLocaleString('es-CL');
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('stratum_business_data');
+            if (saved) {
+                try {
+                    appData = JSON.parse(saved);
+                    // Asegurar que existan todas las propiedades si el localStorage era antiguo
+                    if (!appData.ingredients) appData.ingredients = [];
+                    if (!appData.recipes) appData.recipes = [];
+                    if (!appData.inventory) appData.inventory = [];
+                    if (!appData.orders) appData.orders = [];
+                    if (!appData.sales) appData.sales = [];
+                } catch (e) {
+                    console.error("Error al cargar datos", e);
+                }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('stratum_business_data', JSON.stringify(appData));
+            renderAll();
+        }
+
+        // --- SISTEMA DE MODAL PERSONALIZADO ---
+        let modalCallback = null;
+        function showModal(title, message, isConfirm = false, callback = null) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            modalCallback = callback;
+            const cancelBtn = document.getElementById('modalCancelBtn');
+            if (isConfirm) {
+                cancelBtn.classList.remove('hidden');
+            } else {
+                cancelBtn.classList.add('hidden');
+            }
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeModal(result) {
+            document.getElementById('customModal').classList.add('hidden');
+            if (modalCallback && result) {
+                modalCallback();
+            }
+            modalCallback = null;
+        }
+
+        // --- NAVEGACIÓN Y PANTALLAS ---
+        function enterApp() {
+            document.getElementById('screen-splash').classList.add('hidden');
+            document.getElementById('app-main').classList.remove('hidden');
+            renderAll();
+        }
+
+        function exitApp() {
+            document.getElementById('app-main').classList.add('hidden');
+            document.getElementById('screen-splash').classList.remove('hidden');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+                el.classList.add('text-slate-400', 'hover:bg-slate-700/50', 'hover:text-slate-200');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-700/50', 'hover:text-slate-200');
+                activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/20');
+            }
+        }
+
+        function switchCostSubTab(subTabId) {
+            document.querySelectorAll('.cost-subcontent').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.cost-subtab-btn').forEach(el => {
+                el.classList.remove('bg-indigo-600', 'text-white');
+                el.classList.add('text-slate-400', 'hover:text-white');
+            });
+
+            document.getElementById(`cost-subtab-${subTabId}`).classList.remove('hidden');
+            const btn = document.getElementById(`subnav-${subTabId}`);
+            if (btn) {
+                btn.classList.remove('text-slate-400', 'hover:text-white');
+                btn.classList.add('bg-indigo-600', 'text-white');
+            }
+            if (subTabId === 'pos') renderPOSProducts();
+        }
+
+        // --- RENDERIZADO GLOBAL ---
+        function renderAll() {
+            renderDashboard();
+            renderIngredients();
+            renderRecipes();
+            renderInventory();
+            renderOrders();
+            renderPOSProducts();
+        }
+
+        // 1. Dashboard
+        function renderDashboard() {
+            const today = new Date().toISOString().split('T')[0];
+            const todaySales = appData.sales.filter(s => s.date === today);
+            const totalSalesToday = todaySales.reduce((acc, s) => acc + s.total, 0);
+
+            document.getElementById('dash-sales-today').innerText = formatCLP(totalSalesToday);
+            document.getElementById('dash-sales-count').innerText = todaySales.length;
+
+            // Costo promedio receta
+            let avgCost = 0;
+            if (appData.recipes.length > 0) {
+                const totalCosts = appData.recipes.reduce((acc, r) => acc + calculateRecipeTotalCost(r), 0);
+                avgCost = totalCosts / appData.recipes.length;
+            }
+            document.getElementById('dash-avg-cost').innerText = formatCLP(avgCost);
+
+            // Stock crítico
+            const criticalCount = appData.inventory.filter(i => Number(i.qty) <= Number(i.min)).length;
+            document.getElementById('dash-critical-stock').innerText = criticalCount;
+
+            // Pedidos pendientes
+            const pendingCount = appData.orders.filter(o => o.status === 'Pendiente' || o.status === 'En preparación').length;
+            document.getElementById('dash-pending-orders').innerText = pendingCount;
+
+            // Stats sidebar / cards
+            document.getElementById('stat-ingredients-count').innerText = appData.ingredients.length;
+            document.getElementById('stat-recipes-count').innerText = appData.recipes.length;
+            document.getElementById('stat-total-cash').innerText = formatCLP(totalSalesToday);
+        }
+
+        // 2. Insumos
+        function renderIngredients() {
+            const tbody = document.getElementById('ingredients-table-body');
+            tbody.innerHTML = '';
+            if (appData.ingredients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">No hay insumos registrados.</td></tr>`;
+                return;
+            }
+            appData.ingredients.forEach(ing => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-700/30 transition">
+                        <td class="py-3 px-4 font-medium text-white">${ing.name}</td>
+                        <td class="py-3 px-4 text-slate-300">${ing.unit}</td>
+                        <td class="py-3 px-4 text-slate-300">${formatCLP(ing.cost)}</td>
+                        <td class="py-3 px-4 text-right space-x-2">
+                            <button onclick="editIngredient('${ing.id}')" class="p-1.5 bg-slate-700 hover:bg-indigo-600 text-slate-300 hover:text-white rounded-lg transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deleteIngredient('${ing.id}')" class="p-1.5 bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white rounded-lg transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 3. Recetas
+        function calculateRecipeTotalCost(recipe) {
+            let cost = 0;
+            if (!recipe.items) return 0;
+            recipe.items.forEach(item => {
+                const ing = appData.ingredients.find(i => i.id === item.ingredientId);
+                if (ing) {
+                    cost += Number(ing.cost) * Number(item.quantity);
+                }
+            });
+            return cost;
+        }
+
+        function renderRecipes() {
+            const grid = document.getElementById('recipes-grid');
+            grid.innerHTML = '';
+            if (appData.recipes.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500">No hay recetas creadas.</div>`;
+                return;
+            }
+            appData.recipes.forEach(rec => {
+                const cost = calculateRecipeTotalCost(rec);
+                const profit = rec.price - cost;
+                grid.innerHTML += `
+                    <div class="bg-slate-700/40 border border-slate-700 rounded-2xl p-5 flex flex-col justify-between shadow">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-bold text-white text-base">${rec.name}</h4>
+                                <div class="flex space-x-1">
+                                    <button onclick="editRecipe('${rec.id}')" class="p-1 text-slate-400 hover:text-white"><i class="fa-solid fa-pen text-xs"></i></button>
+                                    <button onclick="deleteRecipe('${rec.id}')" class="p-1 text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                            </div>
+                            <div class="space-y-1 text-xs text-slate-300 mb-4">
+                                <div class="flex justify-between"><span>Costo Producción:</span> <span class="font-semibold text-white">${formatCLP(cost)}</span></div>
+                                <div class="flex justify-between"><span>Margen de Ganancia:</span> <span class="font-semibold text-indigo-400">${rec.margin}%</span></div>
+                                <div class="flex justify-between"><span>Ganancia Estimada:</span> <span class="font-semibold text-emerald-400">${formatCLP(profit)}</span></div>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-700/60 flex justify-between items-center">
+                            <span class="text-xs text-slate-400">Precio Venta:</span>
+                            <span class="text-lg font-bold text-emerald-400">${formatCLP(rec.price)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 4. Inventario & Semáforo
+        function renderInventory() {
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+            if (appData.inventory.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No hay inventario registrado.</td></tr>`;
+                return;
+            }
+            appData.inventory.forEach(item => {
+                const qty = Number(item.qty);
+                const min = Number(item.min);
+                let badge = '';
+                if (qty <= min) {
+                    badge = `<span class="px-2.5 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-medium rounded-full flex items-center space-x-1.5 w-max"><span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span><span>Crítico</span></span>`;
+                } else if (qty <= min * 1.5) {
+                    badge = `<span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-medium rounded-full flex items-center space-x-1.5 w-max"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span>Medio</span></span>`;
+                } else {
+                    badge = `<span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium rounded-full flex items-center space-x-1.5 w-max"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Óptimo</span></span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-700/30 transition">
+                        <td class="py-3 px-4 font-medium text-white">${item.name}</td>
+                        <td class="py-3 px-4">${badge}</td>
+                        <td class="py-3 px-4 text-slate-300 font-semibold">${qty}</td>
+                        <td class="py-3 px-4 text-slate-400">${min}</td>
+                        <td class="py-3 px-4 text-slate-300">${item.unit}</td>
+                        <td class="py-3 px-4 text-right space-x-2">
+                            <button onclick="editInventoryItem('${item.id}')" class="p-1.5 bg-slate-700 hover:bg-indigo-600 text-slate-300 hover:text-white rounded-lg transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deleteInventoryItem('${item.id}')" class="p-1.5 bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white rounded-lg transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 5. Pedidos
+        function renderOrders() {
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = '';
+            if (appData.orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No hay pedidos registrados.</td></tr>`;
+                return;
+            }
+            appData.orders.forEach(ord => {
+                let badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                if (ord.status === 'En preparación') badgeClass = 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+                if (ord.status === 'Entregado') badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-700/30 transition">
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-white">${ord.client}</div>
+                            <div class="text-xs text-slate-400">${ord.phone}</div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-300 max-w-xs truncate">${ord.desc}</td>
+                        <td class="py-3 px-4 text-slate-300">${ord.date}</td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-1 border text-xs font-medium rounded-full ${badgeClass}">${ord.status}</span></td>
+                        <td class="py-3 px-4 text-right space-x-2">
+                            <button onclick="editOrder('${ord.id}')" class="p-1.5 bg-slate-700 hover:bg-indigo-600 text-slate-300 hover:text-white rounded-lg transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deleteOrder('${ord.id}')" class="p-1.5 bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white rounded-lg transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- POS / CARRITO DE VENTAS ---
+        let posCart = [];
+
+        function renderPOSProducts() {
+            const grid = document.getElementById('pos-products-grid');
+            grid.innerHTML = '';
+            if (appData.recipes.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-6 text-center text-slate-500">Crea recetas/artículos primero para venderlos aquí.</div>`;
+                return;
+            }
+            appData.recipes.forEach(rec => {
+                grid.innerHTML += `
+                    <div onclick="addToPOSCart('${rec.id}')" class="p-4 bg-slate-700/40 hover:bg-indigo-600/20 border border-slate-700 hover:border-indigo-500/50 rounded-xl cursor-pointer transition flex justify-between items-center group">
+                        <div>
+                            <h4 class="font-semibold text-white group-hover:text-indigo-300">${rec.name}</h4>
+                            <span class="text-xs text-slate-400">Precio unitario</span>
+                        </div>
+                        <span class="text-lg font-bold text-emerald-400">$${Number(rec.price).toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            renderPOSCart();
+        }
+
+        function addToPOSCart(recipeId) {
+            const recipe = appData.recipes.find(r => r.id === recipeId);
+            if (!recipe) return;
+            const existing = posCart.find(item => item.id === recipeId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                posCart.push({ id: recipe.id, name: recipe.name, price: Number(recipe.price), qty: 1 });
+            }
+            renderPOSCart();
+        }
+
+        function updatePOSQty(recipeId, delta) {
+            const item = posCart.find(i => i.id === recipeId);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) {
+                    posCart = posCart.filter(i => i.id !== recipeId);
+                }
+            }
+            renderPOSCart();
+        }
+
+        function renderPOSCart() {
+            const container = document.getElementById('pos-cart-items');
+            container.innerHTML = '';
+            if (posCart.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">El carrito está vacío</p>`;
+                document.getElementById('pos-cart-total').innerText = '$0.00';
+                return;
+            }
+
+            let total = 0;
+            posCart.forEach(item => {
+                const subtotal = item.price * item.qty;
+                total += subtotal;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-700/30 p-2.5 rounded-xl">
+                        <div>
+                            <div class="text-sm font-medium text-white">${item.name}</div>
+                            <div class="text-xs text-slate-400">$${item.price.toFixed(2)} c/u</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updatePOSQty('${item.id}', -1)" class="w-6 h-6 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-white">-</button>
+                            <span class="text-sm font-bold text-white w-5 text-center">${item.qty}</span>
+                            <button onclick="updatePOSQty('${item.id}', 1)" class="w-6 h-6 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-white">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('pos-cart-total').innerText = `$${total.toFixed(2)}`;
+        }
+
+        function checkoutPOS() {
+            if (posCart.length === 0) {
+                showModal('Aviso', 'El carrito de ventas está vacío.');
+                return;
+            }
+            const total = posCart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+            const method = document.getElementById('pos-payment-method').value;
+
+            // Registrar venta
+            const newSale = {
+                id: Date.now().toString(),
+                items: JSON.parse(JSON.stringify(posCart)),
+                total: total,
+                method: method,
+                date: new Date().toISOString().split('T')[0]
+            };
+            appData.sales.push(newSale);
+
+            // Descontar inventario de insumos en base a las recetas vendidas
+            posCart.forEach(cartItem => {
+                const recipe = appData.recipes.find(r => r.id === cartItem.id);
+                if (recipe && recipe.items) {
+                    recipe.items.forEach(recIng => {
+                        const totalNeeded = Number(recIng.quantity) * cartItem.qty;
+                        const invItem = appData.inventory.find(inv => inv.name.toLowerCase() === getIngredientName(recIng.ingredientId).toLowerCase());
+                        if (invItem) {
+                            invItem.qty = Math.max(0, Number(invItem.qty) - totalNeeded);
+                        }
+                    });
+                }
+            });
+
+            posCart = [];
+            saveData();
+            showModal('Venta Exitosa', 'La venta se ha registrado correctamente y el stock se ha actualizado.');
+            switchCostSubTab('pos');
+        }
+
+        function getIngredientName(ingId) {
+            const ing = appData.ingredients.find(i => i.id === ingId);
+            return ing ? ing.name : '';
+        }
+
+        // --- CRUD INSUMOS ---
+        function openIngredientModal(id = null) {
+            document.getElementById('form-ingredient').reset();
+            document.getElementById('ing-id').value = '';
+            document.getElementById('modal-ingredient-title').innerText = 'Agregar Insumo';
+            if (id) {
+                const ing = appData.ingredients.find(i => i.id === id);
+                if (ing) {
+                    document.getElementById('ing-id').value = ing.id;
+                    document.getElementById('ing-name').value = ing.name;
+                    document.getElementById('ing-unit').value = ing.unit;
+                    document.getElementById('ing-cost').value = ing.cost;
+                    document.getElementById('modal-ingredient-title').innerText = 'Editar Insumo';
+                }
+            }
+            document.getElementById('modal-ingredient').classList.remove('hidden');
+        }
+        function closeIngredientModal() { document.getElementById('modal-ingredient').classList.add('hidden'); }
+
+        function saveIngredient(e) {
+            e.preventDefault();
+            const id = document.getElementById('ing-id').value;
+            const name = document.getElementById('ing-name').value;
+            const unit = document.getElementById('ing-unit').value;
+            const cost = Number(document.getElementById('ing-cost').value);
+
+            if (id) {
+                const ing = appData.ingredients.find(i => i.id === id);
+                if (ing) { ing.name = name; ing.unit = unit; ing.cost = cost; }
+            } else {
+                appData.ingredients.push({ id: Date.now().toString(), name, unit, cost });
+            }
+            closeIngredientModal();
+            saveData();
+        }
+
+        function editIngredient(id) { openIngredientModal(id); }
+        function deleteIngredient(id) {
+            showModal('Confirmar', '¿Deseas eliminar este insumo?', true, () => {
+                appData.ingredients = appData.ingredients.filter(i => i.id !== id);
+                saveData();
+            });
+        }
+
+        // --- CRUD RECETAS ---
+        let currentRecipeIngredients = [];
+
+        function openRecipeModal(id = null) {
+            document.getElementById('form-recipe').reset();
+            document.getElementById('rec-id').value = '';
+            document.getElementById('modal-recipe-title').innerText = 'Crear Artículo / Receta';
+            currentRecipeIngredients = [];
+            
+            if (id) {
+                const rec = appData.recipes.find(r => r.id === id);
+                if (rec) {
+                    document.getElementById('rec-id').value = rec.id;
+                    document.getElementById('rec-name').value = rec.name;
+                    document.getElementById('rec-margin').value = rec.margin;
+                    document.getElementById('rec-price').value = rec.price;
+                    currentRecipeIngredients = JSON.parse(JSON.stringify(rec.items || []));
+                    document.getElementById('modal-recipe-title').innerText = 'Editar Receta';
+                }
+            } else {
+                if (appData.ingredients.length > 0) {
+                    currentRecipeIngredients.push({ ingredientId: appData.ingredients[0].id, quantity: 1 });
+                }
+            }
+            renderRecipeIngredientsRows();
+            calculateRecipeCost();
+            document.getElementById('modal-recipe').classList.remove('hidden');
+        }
+        function closeRecipeModal() { document.getElementById('modal-recipe').classList.add('hidden'); }
+
+        function addRecipeIngredientRow() {
+            if (appData.ingredients.length === 0) {
+                showModal('Aviso', 'Primero debes registrar insumos.');
+                return;
+            }
+            currentRecipeIngredients.push({ ingredientId: appData.ingredients[0].id, quantity: 1 });
+            renderRecipeIngredientsRows();
+            calculateRecipeCost();
+        }
+
+        function removeRecipeIngredientRow(index) {
+            currentRecipeIngredients.splice(index, 1);
+            renderRecipeIngredientsRows();
+            calculateRecipeCost();
+        }
+
+        function renderRecipeIngredientsRows() {
+            const container = document.getElementById('recipe-ingredients-container');
+            container.innerHTML = '';
+            currentRecipeIngredients.forEach((item, index) => {
+                let options = '';
+                appData.ingredients.forEach(ing => {
+                    options += `<option value="${ing.id}" ${ing.id === item.ingredientId ? 'selected' : ''}>${ing.name} (${ing.unit})</option>`;
+                });
+                container.innerHTML += `
+                    <div class="flex items-center space-x-2 bg-slate-700/30 p-2 rounded-xl">
+                        <select onchange="updateRecipeIngId(${index}, this.value)" class="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none">${options}</select>
+                        <input type="number" step="0.01" value="${item.quantity}" oninput="updateRecipeIngQty(${index}, this.value)" class="w-24 bg-slate-700 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none" placeholder="Cant">
+                        <button type="button" onclick="removeRecipeIngredientRow(${index})" class="p-1.5 text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash text-xs"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function updateRecipeIngId(index, val) { currentRecipeIngredients[index].ingredientId = val; calculateRecipeCost(); }
+        function updateRecipeIngQty(index, val) { currentRecipeIngredients[index].quantity = Number(val); calculateRecipeCost(); }
+
+        function calculateRecipeCost() {
+            let cost = 0;
+            currentRecipeIngredients.forEach(item => {
+                const ing = appData.ingredients.find(i => i.id === item.ingredientId);
+                if (ing) {
+                    cost += Number(ing.cost) * Number(item.quantity);
+                }
+            });
+            document.getElementById('rec-calculated-cost').innerText = formatCLP(cost);
+            const margin = Number(document.getElementById('rec-margin').value) || 0;
+            const suggestedPrice = Math.round(cost * (1 + (margin / 100)));
+            document.getElementById('rec-price').value = suggestedPrice;
+        }
+
+        function saveRecipe(e) {
+            e.preventDefault();
+            const id = document.getElementById('rec-id').value;
+            const name = document.getElementById('rec-name').value;
+            const margin = Number(document.getElementById('rec-margin').value);
+            const price = Math.round(Number(document.getElementById('rec-price').value));
+            const items = JSON.parse(JSON.stringify(currentRecipeIngredients));
+
+            if (id) {
+                const rec = appData.recipes.find(r => r.id === id);
+                if (rec) { rec.name = name; rec.margin = margin; rec.price = price; rec.items = items; }
+            } else {
+                appData.recipes.push({ id: Date.now().toString(), name, margin, price, items });
+            }
+            closeRecipeModal();
+            saveData();
+        }
+        function renderPOSProducts() {
+            const grid = document.getElementById('pos-products-grid');
+            grid.innerHTML = '';
+            if (appData.recipes.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-6 text-center text-slate-500">Crea recetas/artículos primero para venderlos aquí.</div>`;
+                return;
+            }
+            appData.recipes.forEach(rec => {
+                grid.innerHTML += `
+                    <div onclick="addToPOSCart('${rec.id}')" class="p-4 bg-slate-700/40 hover:bg-indigo-600/20 border border-slate-700 hover:border-indigo-500/50 rounded-xl cursor-pointer transition flex justify-between items-center group">
+                        <div>
+                            <h4 class="font-semibold text-white group-hover:text-indigo-300">${rec.name}</h4>
+                            <span class="text-xs text-slate-400">Precio unitario</span>
+                        </div>
+                        <span class="text-lg font-bold text-emerald-400">${formatCLP(rec.price)}</span>
+                    </div>
+                `;
+            });
+            renderPOSCart();
+        }
+
+        function addToPOSCart(recipeId) {
+            const recipe = appData.recipes.find(r => r.id === recipeId);
+            if (!recipe) return;
+            const existing = posCart.find(item => item.id === recipeId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                posCart.push({ id: recipe.id, name: recipe.name, price: Number(recipe.price), qty: 1 });
+            }
+            renderPOSCart();
+        }
+
+        function updatePOSQty(recipeId, delta) {
+            const item = posCart.find(i => i.id === recipeId);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) {
+                    posCart = posCart.filter(i => i.id !== recipeId);
+                }
+            }
+            renderPOSCart();
+        }
+
+        function renderPOSCart() {
+            const container = document.getElementById('pos-cart-items');
+            container.innerHTML = '';
+            if (posCart.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">El carrito está vacío</p>`;
+                document.getElementById('pos-cart-total').innerText = formatCLP(0);
+                return;
+            }
+
+            let total = 0;
+            posCart.forEach(item => {
+                const subtotal = item.price * item.qty;
+                total += subtotal;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-700/30 p-2.5 rounded-xl">
+                        <div>
+                            <div class="text-sm font-medium text-white">${item.name}</div>
+                            <div class="text-xs text-slate-400">${formatCLP(item.price)} c/u</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updatePOSQty('${item.id}', -1)" class="w-6 h-6 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-white">-</button>
+                            <span class="text-sm font-bold text-white w-5 text-center">${item.qty}</span>
+                            <button onclick="updatePOSQty('${item.id}', 1)" class="w-6 h-6 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-white">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('pos-cart-total').innerText = formatCLP(total);
+        }
+
+        // --- CRUD INVENTARIO ---
+        function openInventoryModal(id = null) {
+            document.getElementById('form-inventory').reset();
+            document.getElementById('inv-id').value = '';
+            document.getElementById('modal-inventory-title').innerText = 'Agregar Artículo al Stock';
+            if (id) {
+                const item = appData.inventory.find(i => i.id === id);
+                if (item) {
+                    document.getElementById('inv-id').value = item.id;
+                    document.getElementById('inv-name').value = item.name;
+                    document.getElementById('inv-qty').value = item.qty;
+                    document.getElementById('inv-min').value = item.min;
+                    document.getElementById('inv-unit').value = item.unit;
+                    document.getElementById('modal-inventory-title').innerText = 'Editar Stock';
+                }
+            }
+            document.getElementById('modal-inventory').classList.remove('hidden');
+        }
+        function closeInventoryModal() { document.getElementById('modal-inventory').classList.add('hidden'); }
+
+        function saveInventoryItem(e) {
+            e.preventDefault();
+            const id = document.getElementById('inv-id').value;
+            const name = document.getElementById('inv-name').value;
+            const qty = Number(document.getElementById('inv-qty').value);
+            const min = Number(document.getElementById('inv-min').value);
+            const unit = document.getElementById('inv-unit').value;
+
+            if (id) {
+                const item = appData.inventory.find(i => i.id === id);
+                if (item) { item.name = name; item.qty = qty; item.min = min; item.unit = unit; }
+            } else {
+                appData.inventory.push({ id: Date.now().toString(), name, qty, min, unit });
+            }
+            closeInventoryModal();
+            saveData();
+        }
+
+        function editInventoryItem(id) { openInventoryModal(id); }
+        function deleteInventoryItem(id) {
+            showModal('Confirmar', '¿Deseas eliminar este elemento del inventario?', true, () => {
+                appData.inventory = appData.inventory.filter(i => i.id !== id);
+                saveData();
+            });
+        }
+
+        // --- LISTA DE COMPRAS AUTOMÁTICA ---
+        function openShoppingListModal() {
+            const container = document.getElementById('shopping-list-content');
+            container.innerHTML = '';
+            const criticalItems = appData.inventory.filter(i => Number(i.qty) <= Number(i.min));
+
+            if (criticalItems.length === 0) {
+                container.innerHTML = `<p class="text-sm text-slate-400 text-center py-4">¡Excelente! Ningún artículo está en nivel crítico.</p>`;
+            } else {
+                criticalItems.forEach(item => {
+                    const deficit = Number(item.min) * 2 - Number(item.qty);
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center bg-slate-700/40 p-3 rounded-xl border border-rose-500/20">
+                            <div>
+                                <h4 class="font-semibold text-white">${item.name}</h4>
+                                <span class="text-xs text-rose-400">Stock actual: ${item.qty} ${item.unit} (Mín: ${item.min})</span>
+                            </div>
+                            <span class="text-xs font-medium bg-rose-500/20 text-rose-300 px-3 py-1 rounded-lg">Sugerido comprar: ~${deficit.toFixed(1)} ${item.unit}</span>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('modal-shopping-list').classList.remove('hidden');
+        }
+        function closeShoppingListModal() { document.getElementById('modal-shopping-list').classList.add('hidden'); }
+
+        // --- CRUD PEDIDOS ---
+        function openOrderModal(id = null) {
+            document.getElementById('form-order').reset();
+            document.getElementById('ord-id').value = '';
+            document.getElementById('modal-order-title').innerText = 'Nuevo Pedido / Encargo';
+            document.getElementById('ord-date').value = new Date().toISOString().split('T')[0];
+
+            if (id) {
+                const ord = appData.orders.find(o => o.id === id);
+                if (ord) {
+                    document.getElementById('ord-id').value = ord.id;
+                    document.getElementById('ord-client').value = ord.client;
+                    document.getElementById('ord-phone').value = ord.phone;
+                    document.getElementById('ord-desc').value = ord.desc;
+                    document.getElementById('ord-date').value = ord.date;
+                    document.getElementById('ord-status').value = ord.status;
+                    document.getElementById('modal-order-title').innerText = 'Editar Pedido';
+                }
+            }
+            document.getElementById('modal-order').classList.remove('hidden');
+        }
+        function closeOrderModal() { document.getElementById('modal-order').classList.add('hidden'); }
+
+        function saveOrder(e) {
+            e.preventDefault();
+            const id = document.getElementById('ord-id').value;
+            const client = document.getElementById('ord-client').value;
+            const phone = document.getElementById('ord-phone').value;
+            const desc = document.getElementById('ord-desc').value;
+            const date = document.getElementById('ord-date').value;
+            const status = document.getElementById('ord-status').value;
+
+            if (id) {
+                const ord = appData.orders.find(o => o.id === id);
+                if (ord) { ord.client = client; ord.phone = phone; ord.desc = desc; ord.date = date; ord.status = status; }
+            } else {
+                appData.orders.push({ id: Date.now().toString(), client, phone, desc, date, status });
+            }
+            closeOrderModal();
+            saveData();
+        }
+
+        function editOrder(id) { openOrderModal(id); }
+        function deleteOrder(id) {
+            showModal('Confirmar', '¿Deseas eliminar este pedido?', true, () => {
+                appData.orders = appData.orders.filter(o => o.id !== id);
+                saveData();
+            });
+        }
+
+        // --- RESTAURAR DATOS ---
+        function resetDataModal() {
+            showModal('Restaurar Datos', '¿Deseas restablecer los datos predeterminados de demostración?', true, () => {
+                appData = JSON.parse(JSON.stringify(defaultData));
+                saveData();
+            });
+        }
+
+        // Inicialización al cargar la ventana
+        window.onload = function() {
+            loadData();
+            renderAll();
+        }
+    </script>
+</body>
+</html>
